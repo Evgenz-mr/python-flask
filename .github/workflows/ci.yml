@@ -1,0 +1,26 @@
+name: flask-service-ci
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt
+      - run: pytest -q
+      - name: Build container
+        run: docker build -t python-flask-lab:test .
+      - name: Verify non-root image user
+        run: |
+          user=$(docker image inspect python-flask-lab:test --format '{{.Config.User}}')
+          test -n "$user"
+          test "$user" != "0"
